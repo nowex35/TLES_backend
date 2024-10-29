@@ -7,4 +7,6 @@ urlpatterns = [
     #アカウント
     path("api/", include("accounts.urls")),
     path('admin/', admin.site.urls),
+    #チケット
+    path("api/tickets/", include("tickets.urls")),  # ここでticketsアプリのURLをインクルード
 ]

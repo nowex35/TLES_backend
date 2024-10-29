@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "djoser",
     "accounts",
+    'tickets',  # 追加
     "cloudinary",
     "cloudinary_storage",
     "corsheaders",
