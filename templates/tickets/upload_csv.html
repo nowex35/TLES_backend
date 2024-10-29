@@ -1,0 +1,39 @@
+<!-- templates/upload_csv.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>CSVファイルアップロード</title>
+</head>
+<body>
+    <h2>CSVファイルをアップロード</h2>
+    <form id="upload-form" action="{% url 'upload_csv' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="file">CSVファイル:</label>
+        <input type="file" id="file" name="file" accept=".csv" required>
+        <button type="submit">アップロード</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('upload-form').onsubmit = async function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                });
+                const data = await response.json();
+                document.getElementById('result').textContent = data.message || 'アップロードに成功しました';
+            } catch (error) {
+                document.getElementById('result').textContent = 'アップロードに失敗しました。';
+            }
+        };
+    </script>
+</body>
+</html>
