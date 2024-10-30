@@ -1,3 +1,5 @@
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django.shortcuts import render
 from django.views import View
 from rest_framework.views import APIView
@@ -89,6 +91,8 @@ class TicketViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
+    
+    @method_decorator(cache_page(60 * 15))  # キャッシュを15分に設定
     def list(self, request, *args, **kwargs):
         """
             チケット情報を取得するAPI
