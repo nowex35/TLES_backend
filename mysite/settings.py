@@ -217,3 +217,10 @@ AUTH_USER_MODEL = "accounts.UserAccount"
 #サイト設定
 SITE_DOMAIN = env('SITE_DOMAIN')
 SITE_NAME = env('SITE_NAME')
+
+CACHES = {
+    'default': {
+        'BACKEND' : 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION' : 'unique-snowflake'
+    }
+}
