@@ -1,39 +1,154 @@
-<!-- templates/upload_csv.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>CSVファイルアップロード</title>
+    <title>CSVファイルアップロードと加工</title>
+    <style>
+        /* ベースカラー設定 */
+        :root {
+            --base-color: #54C0CF;
+            --button-hover: #4ca7b3;
+            --background-color: #f4f9fb;
+            --text-color: #333;
+        }
+
+        /* 全体のスタイル */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h2 {
+            color: var(--base-color);
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        /* フォームのスタイル */
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        input[type="file"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        /* ボタンスタイル */
+        button {
+            width: 100%;
+            background-color: var(--base-color);
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--button-hover);
+        }
+
+        /* メッセージのスタイル */
+        .message {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* 成功時のメッセージ */
+        .message.success {
+            display: block;
+            background-color: #d4f4e3;
+            color: #237f50;
+        }
+
+        /* エラー時のメッセージ */
+        .message.error {
+            display: block;
+            background-color: #f4d4d4;
+            color: #7f2323;
+        }
+    </style>
 </head>
 <body>
-    <h2>CSVファイルをアップロード</h2>
-    <form id="upload-form" action="{% url 'upload_csv' %}" method="post" enctype="multipart/form-data">
+    <!-- 加工用CSVファイルのアップロードとダウンロード用フォーム -->
+    <h2>加工用CSVファイルをアップロードしてZIPファイルを取得</h2>
+    <form id="process-form" action="{% url 'process_csv' %}" method="post" enctype="multipart/form-data" target="result-frame">
+        {% csrf_token %}
+        <label for="process_file">CSVファイル:</label>
+        <input type="file" id="process_file" name="csv_file" accept=".csv,.xlsx" required>
+
+        <label for="event_id">イベントID (任意):</label>
+        <input type="number" id="event_id" name="event_id" min="0" step="1" placeholder="数字を入力してください">
+
+        <button type="submit">加工してZIPファイルをダウンロード</button>
+    </form>
+    <div id="process-result" class="message"></div>
+
+    <!-- データベースへのCSVファイルアップロード用フォーム -->
+    <h2>データベースにCSVファイルをアップロード</h2>
+    <form id="upload-form" action="{% url 'upload_csv' %}" method="post" enctype="multipart/form-data" target="result-frame">
         {% csrf_token %}
         <label for="file">CSVファイル:</label>
         <input type="file" id="file" name="file" accept=".csv" required>
+
         <button type="submit">アップロード</button>
     </form>
-    <div id="result"></div>
+    <div id="result" class="message"></div>
+
+    <!-- 結果のメッセージを表示するためのiframe -->
+    <iframe name="result-frame" style="display: none;" onload="showMessage()"></iframe>
 
     <script>
-        document.getElementById('upload-form').onsubmit = async function(event) {
-            event.preventDefault();
-            const formData = new FormData(this);
+        // メッセージを表示する関数
+        function showMessage() {
+            const iframe = document.querySelector("iframe[name='result-frame']");
+            const result = iframe.contentDocument.body.textContent.trim();
 
-            try {
-                const response = await fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                    }
-                });
-                const data = await response.json();
-                document.getElementById('result').textContent = data.message || 'アップロードに成功しました';
-            } catch (error) {
-                document.getElementById('result').textContent = 'アップロードに失敗しました。';
+            // メッセージ要素を取得
+            const processResult = document.getElementById("process-result");
+            const uploadResult = document.getElementById("result");
+
+            if (result.includes("成功しました")) {
+                processResult.textContent = "アップロードに成功しました";
+                processResult.className = "message success";
+                uploadResult.textContent = "アップロードに成功しました";
+                uploadResult.className = "message success";
+            } else if (result) {
+                processResult.textContent = "アップロードに失敗しました";
+                processResult.className = "message error";
+                uploadResult.textContent = "アップロードに失敗しました";
+                uploadResult.className = "message error";
             }
-        };
+        }
     </script>
 </body>
 </html>

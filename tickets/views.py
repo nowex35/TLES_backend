@@ -8,7 +8,20 @@ from rest_framework import viewsets,status
 from .models import Ticket
 from .serializers import TicketSerializer
 from rest_framework.permissions import AllowAny
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import gettext as _
+from django.core.files.storage import FileSystemStorage
+from django.core.exceptions import ValidationError
+from .preprocessing import allpreprocessing, allpreprocessing_full, allpreprocessing_customer
+import mimetypes
+import chardet
+import logger
+import zipfile
+from django.http import HttpResponse
+import pandas as pd
 import csv
+from django.conf import settings
+import os
 import io
 from datetime import datetime
 from django.db.models import Q
@@ -40,7 +53,7 @@ class CSVUploadView(APIView):
                     
                     # シリアライザでデータのバリデーションと保存
                     serializer = TicketSerializer(data={
-                        'quantity': row.get("重複枚数"),
+                        'quantity': row.get("重複枚数") or 0,
                         'Order_number': row.get("Order number"),
                         'purchase_datetime': purchase_datetime,
                         'ticket_type': row.get("チケット種類"),
@@ -51,13 +64,13 @@ class CSVUploadView(APIView):
                         'nationality': row.get("国籍") or "未指定",
                         'gender': row.get("性別"),
                         'age_group': row.get("年代"),
-                        'school_year': row.get("学年"),
-                        'department': row.get("所属"),
+                        'grade': row.get("学年"),
+                        'department': row.get("所属") or "無回答",
                         'referral_source': row.get("知ったきっかけ"),
-                        'attendance_count': row.get("来場回数"),
+                        'attendance_count': row.get("来場回数") or "無回答",
                         'play_freq': row.get("スポーツ実施頻度"),
                         'viewing_freq': row.get("スポーツ観戦頻度"),
-                        'special_viewing_freq': row.get("開催競技観戦頻度"),
+                        'special_viewing_freq': row.get("開催競技観戦頻度") or "無回答",
                         'event_id': row.get("event_id"),
                     })
                     
@@ -118,7 +131,7 @@ class TicketViewSet(viewsets.ModelViewSet):
             nationality = request.query_params.getlist('nationality')
             gender = request.query_params.getlist('gender')
             age_group = request.query_params.getlist('age_group')
-            school_year = request.query_params.getlist('school_year')
+            grade = request.query_params.getlist('grade')
             department = request.query_params.getlist('department')
             attendance_count = request.query_params.getlist('attendance_count')
             play_freq = request.query_params.getlist('play_freq')
@@ -153,8 +166,8 @@ class TicketViewSet(viewsets.ModelViewSet):
                 query &= Q(gender__in=gender)
             if age_group:
                 query &= Q(age_group__in=age_group)
-            if school_year:
-                query &= Q(school_year__in=school_year)
+            if grade:
+                query &= Q(grade__in=grade)
             if department:
                 query &= Q(department__in=department)
             if attendance_count:
@@ -188,3 +201,113 @@ class TicketViewSet(viewsets.ModelViewSet):
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+# アップロードされたファイルを一時保存するためのパス
+UPLOAD_DIR = os.path.join(settings.BASE_DIR, 'ProcessData_tl_uploaded_files')
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
+
+fs = FileSystemStorage(location=UPLOAD_DIR)
+
+@csrf_exempt  # CSRF対策を適用するため、フロントエンドでトークンを使用することを推奨
+def upload_file(request):
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        csv_file = request.FILES['csv_file']
+        event_id = request.POST.get('event_id')
+        
+        try:
+            # ファイルのMIMEタイプを確認
+            mime_type, _ = mimetypes.guess_type(csv_file.name)
+            if mime_type not in ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv']:
+                raise ValidationError(_('無効なファイル形式です。CSVまたはExcelファイルをアップロードしてください。'))
+
+            # ファイルを一時保存
+            saved_file_path = fs.save(csv_file.name, csv_file)
+            saved_file_full_path = os.path.join(UPLOAD_DIR, saved_file_path)
+
+            # ファイルをDataFrameとして読み込む
+            file_name = csv_file.name.lower()
+            if file_name.endswith('.xlsx') or file_name.endswith('.xls'):
+                # Excelファイルとして読み込む
+                df = pd.read_excel(saved_file_full_path, engine='openpyxl')
+            else:
+                # CSVファイルとして読み込むためにエンコーディングを推測
+                with open(saved_file_full_path, 'rb') as f:
+                    raw_data = f.read()
+                    result = chardet.detect(raw_data)
+                    encoding = result['encoding']
+                df = pd.read_csv(saved_file_full_path, encoding=encoding)
+
+            # ファイル内容の基本検証
+            if df.empty:
+                raise ValidationError(_('アップロードされたファイルは空です。適切なデータを含むファイルをアップロードしてください。'))
+            if len(df.columns) < 1:
+                raise ValidationError(_('アップロードされたファイルに有効な列がありません。適切なデータを含むファイルをアップロードしてください。'))
+
+            # 前処理関数が定義されているか確認
+            if allpreprocessing is None:
+                logger.error("allpreprocessing function is not defined")
+                raise ValueError("allpreprocessing function is not defined")
+
+            # 前処理を実行
+            processed_df = allpreprocessing(df)
+            processed_full_df = allpreprocessing_full(df.copy())
+            processed_customer_df = allpreprocessing_customer(df.copy())
+
+            # 元のファイル名（拡張子なし）を取得してZIPファイルの名前に使用
+            file_name_base = os.path.splitext(csv_file.name)[0]
+
+            # メモリ上でZIPファイルを作成
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+                # ExcelファイルとShift_JISエンコーディングのCSVファイルをZIPに追加
+                for df, label in [(processed_df, 'cut'), (processed_full_df, 'full'), (processed_customer_df, 'customer_info')]:
+                    excel_buffer = io.BytesIO()
+                    with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                        df.to_excel(writer, index=False, sheet_name='Sheet1')
+                    excel_buffer.seek(0)
+                    zf.writestr(f'{file_name_base}_{label}.xlsx', excel_buffer.getvalue())
+
+                    # Shift_JISエンコーディングのCSVも追加
+                    sjis_csv_buffer = io.StringIO()
+                    df.to_csv(sjis_csv_buffer, index=False, encoding='shift_jis')
+                    sjis_csv_buffer.seek(0)
+                    zf.writestr(f'{file_name_base}_{label}.csv', sjis_csv_buffer.getvalue())
+
+            # ZIPファイルをHTTPレスポンスとして返す
+            zip_buffer.seek(0)
+            response = HttpResponse(zip_buffer, content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename={file_name_base}.zip'
+
+            return response
+
+        except ValidationError as ve:
+            logger.error("Validation error: %s" % str(ve))
+            return HttpResponse(str(ve), status=400)
+        except ValueError as ve:
+            logger.error("Value error: %s" % str(ve))
+            return HttpResponse(str(ve), status=500)
+        except Exception as e:
+            logger.error("Error processing file: %s" % str(e))
+            return HttpResponse("エラーが発生しました。後でもう一度お試しください。", status=500)
+
+        finally:
+            # 一時ファイルのクリーンアップ
+            if os.path.exists(saved_file_full_path):
+                try:
+                    os.remove(saved_file_full_path)
+                except Exception as e:
+                    logger.error("Failed to delete %s. Reason: %s" % (saved_file_full_path, str(e)))
+
+    return render(request, 'preprocessing/upload.html')
+
+# 一時ファイルのクリーンアップ
+def cleanup_temp_files():
+    for filename in os.listdir(UPLOAD_DIR):
+        file_path = os.path.join(UPLOAD_DIR, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            logger.error(f'Failed to delete {file_path}. Reason: {e}')
