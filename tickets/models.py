@@ -93,7 +93,7 @@ class Ticket(models.Model):
         ('7~', '7~'),
         ("無回答", "無回答")
     ]
-    SCHOOL_YEAR_CHOICES = [
+    GRADE_CHOICES = [
         ('1年', '1年'),
         ('2年', '2年'),
         ('3年', '3年'),
@@ -121,11 +121,11 @@ class Ticket(models.Model):
     nationality = models.CharField("国籍", max_length=50)
     gender = models.CharField("性別", max_length=50, choices=GENDER_CHOICES, default="無回答")
     age_group = models.CharField("年代", max_length=50, choices=AGE_GROUP_CHOICES, default="無回答")
-    school_year = models.CharField("学年", max_length=50, choices=SCHOOL_YEAR_CHOICES)
+    grade = models.CharField("学年", max_length=50, choices=GRADE_CHOICES)
     department = models.CharField("所属", max_length=50, choices=DEPARTMENT_CHOICES, default="無回答")
-    referral_source = models.CharField("流入経路", max_length=50)
+    referral_source = models.CharField("流入経路", max_length=150)
     attendance_count = models.CharField("来場回数", max_length=50, choices=ATTENDANCE_COUNT_CHOICES, default="無回答")
     play_freq = models.CharField("スポーツ実施頻度", max_length=50, choices=PLAY_FREQ_CHOICES, default="無回答")
-    viewing_freq = models.CharField("スポーツ観戦観戦頻度", max_length=50, choices=VIEWING_FREQ_CHOICES, default="無回答")
+    viewing_freq = models.CharField("スポーツ観戦頻度", max_length=50, choices=VIEWING_FREQ_CHOICES, default="無回答")
     special_viewing_freq = models.CharField("開催競技観戦頻度", max_length=50, choices=SPECIAL_VIEWING_CHOICES, default="無回答")
     event_id = models.ForeignKey(Event, on_delete=models.PROTECT)

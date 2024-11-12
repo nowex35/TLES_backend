@@ -91,12 +91,12 @@ class TicketAdmin(admin.ModelAdmin):
         "category",
         "gender",
         "age_group",
-        "school_year",
+        "grade",
         "department",
         "event_id",
     )
     search_fields = ("order_number", "ticket_type", "category", "gender", "age_group", "department")
-    list_filter = ("ticket_type", "category", "gender", "age_group", "school_year", "department", "event_id")
+    list_filter = ("ticket_type", "category", "gender", "age_group", "grade", "department", "event_id")
     ordering = ("-purchase_datetime",)
     readonly_fields = ("ticket_id",)
     
