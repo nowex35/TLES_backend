@@ -19,7 +19,7 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env("DEBUG")
 
 #本番環境では、ALLOWED_HOSTSを指定する
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
