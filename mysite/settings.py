@@ -13,10 +13,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
 env.read_env(os.path.join(BASE_DIR, '.env'))
 
-SECRET_KEY = 'django-insecure-_(djxfw!rmq=_-02o9lhd^+$0=fr*e*pq-bwdnotnlsy!%m0r5'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG")
 
 #本番環境では、ALLOWED_HOSTSを指定する
 ALLOWED_HOSTS = ["*"]
@@ -50,11 +50,22 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'mysite.middlewares.SameSiteMiddleware',
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
+
 #本番環境では、CORS_ORIGIN_WHITELISTを指定する
-#CORS_ALLOWED_ORIGINS = []
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:3000",
+    "http://localhost:3000",
+    "https://127.0.0.1:3000",
+    "https://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://ec2-18-205-158-217.compute-1.amazonaws.com"
+]
+
 
 ROOT_URLCONF = 'mysite.urls'
 
@@ -76,6 +87,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mysite.wsgi.application'
 
+CSRF_TRUSTED_ORIGINS = ['localhost:3000', '127.0.0.1', 'ec2-18-205-158-217.compute-1.amazonaws.com']
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
 
 default_dburl = 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')
 
