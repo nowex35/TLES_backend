@@ -4,6 +4,7 @@ import environ
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
+import dj_database_url
 from dj_database_url import parse as dburl
 
 # プロジェクトのルートディレクトリを取得(現在の__file__objectの親の親を参照)
