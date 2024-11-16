@@ -19,7 +19,7 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env("DEBUG")
 
 #本番環境では、ALLOWED_HOSTSを指定する
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 
 # Application definition
@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "djoser",
     "accounts",
-    'tickets',  # 追加
+    'tickets',
     "cloudinary",
     "cloudinary_storage",
     "corsheaders",
@@ -87,7 +87,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mysite.wsgi.application'
 
-CSRF_TRUSTED_ORIGINS = ['localhost:3000', '127.0.0.1', 'ec2-18-205-158-217.compute-1.amazonaws.com']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1', 'https://ec2-18-205-158-217.compute-1.amazonaws.com']
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True
 
