@@ -268,7 +268,7 @@ def additional_revise(df_name):
         df_name["所属"] = df_name["所属"].str.replace("人間総合科学学術院/Graduate School of Comprehensive Human Sciences", "人間総合科学学術院")
         df_name["所属"] = df_name["所属"].str.replace("グローバル教育院/School of Integrative and Global Majors", "グローバル教育院")
         # カンマで区切られている場合、最初の選択肢だけを選ぶ
-        df_name["所属"] = df_name["所属"].apply(lambda x: x.split(',')[0] if ',' in x else x)
+        df_name["所属"] = df_name["所属"].fillna("").apply(lambda x: x.split(',')[0] if ',' in x else x)
         
     # スポーツ観戦頻度の列で、コンマで区切られた最初の選択肢のみを取得
     if "スポーツ観戦頻度" in df_name.columns:

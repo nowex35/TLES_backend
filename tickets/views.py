@@ -56,21 +56,21 @@ class CSVUploadView(APIView):
                         'quantity': row.get("重複枚数") or 0,
                         'Order_number': row.get("Order number"),
                         'purchase_datetime': purchase_datetime,
-                        'ticket_type': row.get("チケット種類"),
+                        'ticket_type': row.get("チケット種類") or "未指定",
                         'ticket_price': row.get("チケット価格"),
                         'seat_type': row.get("座席種"),
                         'coupon_applied': row.get("クーポン有無") != "クーポンなし",
-                        'category': row.get("カテゴリー"),
+                        'category': row.get("カテゴリー") if row.get("カテゴリー") in dict(Ticket.CATEGORY_CHOICES) else "無回答",
                         'nationality': row.get("国籍") or "未指定",
-                        'gender': row.get("性別"),
-                        'age_group': row.get("年代"),
-                        'grade': row.get("学年"),
-                        'department': row.get("所属") or "無回答",
-                        'referral_source': row.get("知ったきっかけ"),
-                        'attendance_count': row.get("来場回数") or "無回答",
-                        'play_freq': row.get("スポーツ実施頻度"),
-                        'viewing_freq': row.get("スポーツ観戦頻度"),
-                        'special_viewing_freq': row.get("開催競技観戦頻度") or "無回答",
+                        'gender': row.get("性別") if row.get("性別") in dict(Ticket.GENDER_CHOICES) else "無回答",
+                        'age_group': row.get("年代") if row.get("年代") in dict(Ticket.AGE_GROUP_CHOICES) else "無回答",
+                        'grade': row.get("学年") if row.get("学年") in dict(Ticket.GRADE_CHOICES) else "無回答",
+                        'department': row.get("所属") if row.get("所属") in dict(Ticket.DEPARTMENT_CHOICES) else "無回答",
+                        'referral_source': row.get("知ったきっかけ") or "無回答",
+                        'attendance_count': row.get("来場回数") if row.get("来場回数") in dict(Ticket.ATTENDANCE_COUNT_CHOICES) else "無回答",
+                        'play_freq': row.get("スポーツ実施頻度") if row.get("スポーツ実施頻度") in dict(Ticket.PLAY_FREQ_CHOICES) else "無回答",
+                        'viewing_freq': row.get("スポーツ観戦頻度") if row.get("スポーツ観戦頻度") in dict(Ticket.VIEWING_FREQ_CHOICES) else "無回答",
+                        'special_viewing_freq': row.get("開催競技観戦頻度") if row.get("開催競技観戦頻度") in dict(Ticket.SPECIAL_VIEWING_CHOICES) else "無回答",
                         'event_id': row.get("event_id"),
                     })
                     
@@ -254,6 +254,12 @@ def upload_file(request):
             processed_df = allpreprocessing(df)
             processed_full_df = allpreprocessing_full(df.copy())
             processed_customer_df = allpreprocessing_customer(df.copy())
+            
+            # event_id を追加
+            if event_id:
+                processed_df['event_id'] = event_id
+                processed_full_df['event_id'] = event_id
+                processed_customer_df['event_id'] = event_id
 
             # 元のファイル名（拡張子なし）を取得してZIPファイルの名前に使用
             file_name_base = os.path.splitext(csv_file.name)[0]
