@@ -62,8 +62,9 @@ def full_rename(df_name):
     
 # データ名の修正
 def revise_price_data(df_name):
-    df_name["チケット価格"] = df_name["チケット価格"].astype(str)  # 非文字列データを文字列に変換
-    df_name["チケット価格"] = df_name["チケット価格"].str.replace("¥", "").str.replace(",", "").astype(int)
+    if "チケット価格" in df_name.columns:
+        df_name["チケット価格"] = df_name["チケット価格"].astype(str)  # 非文字列データを文字列に変換
+        df_name["チケット価格"] = df_name["チケット価格"].str.replace("¥", "").str.replace(",", "").astype(int)
     
 def revise_coupon_data(df_name):
     df_name["クーポン有無"] = df_name["クーポン有無"].astype(str)  # 非文字列データを文字列に変換
@@ -71,6 +72,11 @@ def revise_coupon_data(df_name):
     df_name["クーポン有無"] = df_name["クーポン有無"].str.replace("¥500 - HANDBALL", "クーポンあり")
     df_name["クーポン有無"] = df_name["クーポン有無"].str.replace("nan", "クーポンなし")
     df_name.loc[df_name["クーポン有無"].isna(), "クーポン有無"] = "クーポンなし"
+    if "クーポン有無" in df_name.columns:
+        df_name["クーポン有無"] = df_name["クーポン有無"].astype(str)  # 非文字列データを文字列に変換
+        df_name["クーポン有無"] = df_name["クーポン有無"].str.replace(r"^¥500.*", "クーポンあり", regex=True)
+        df_name["クーポン有無"] = df_name["クーポン有無"].str.replace("nan", "クーポンなし")
+        df_name.loc[df_name["クーポン有無"].isna(), "クーポン有無"] = "クーポンなし"
 
 def revise_Category_data(df_name):
     if "カテゴリー" in df_name.columns:
@@ -87,60 +93,66 @@ def revise_Grade_data(df_name):
     df_name["学年"] = df_name["学年"].str.replace("博士課程/Ph.D", "Ph.D")
     df_name["学年"] = df_name["学年"].str.replace("筑波大生ではない/Not UT student", "筑波大生でない")
     df_name["学年"] = df_name["学年"].str.replace("-", "筑波大生でない")
+    if "学年" in df_name.columns:
+        df_name["学年"] = df_name["学年"].str.replace("修士課程/Master's Course", "Master")
+        df_name["学年"] = df_name["学年"].str.replace("博士課程/Ph.D", "Ph.D")
+        df_name["学年"] = df_name["学年"].str.replace("筑波大生ではない/Not UT student", "筑波大生でない")
+        df_name["学年"] = df_name["学年"].str.replace("-", "筑波大生でない")
     
 def revise_reasons_data(df_name):
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("前回のTSUKUBA LIVE!から知っていた/I knew it from the last TSUKUBA LIVE!", "前回から知っていた")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("前回のTSUKUBA LIVE!で知った/I knew it at the last TSUKUBA LIVE!", "前回のTL!で知った")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace(" 前回のTSUKUBA LIVE!の時から知っていた/knew from the last Home Game", "前回のTL!で知った")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("前回のTSUKUBA LIVE!の時から知っていた/knew from the last Home Game", "前回のTL!で知った")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("前回のTSUKUBA LIVE!から知っていた/I knew it from the latest TSUKUBA LIVE!", "前回のTL!で知った")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("家族・友人の紹介/from a friend・family", "家族・友人の紹介")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace(" 家族・友人の紹介/from a friend", "家族・友人の紹介")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("家族・友人の紹介/from a friend", "家族・友人の紹介")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("家族・友人の紹介/ from a friend・family", "家族・友人の紹介")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("選手の知り合い/friend of player", "選手の知人")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("女子バレーボール部員の紹介/Introduction from the women's volleyball team", "選手の知人")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("男子バレーボール部員の紹介/Introduction from the men's volleyball team", "選手の知人")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("男子バスケットボール部員の紹介/Introduction from the men's basketball team member", "選手の知人")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("男子バスケットボール部員の紹介/ Introduction from the men's basketball team member", "選手の知人")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("女子バスケットボール部員の紹介/Introduction from the women's basketball team member", "選手の知人")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("TSUKUBA LIVE! 運営スタッフの紹介/Introduction from the TSUKUBA LIVE! organizing staff", "クリエイターからの紹介")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("TSUKUBA LIVE! 運営スタッフの紹介/Introduction from the TSUKUBA LIVE! creators", "クリエイターからの紹介")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("TSUKUBA LIVE! 運営スタッフの紹介/ Introduction from the TSUKUBA LIVE! creators", "クリエイターからの紹介")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("メディアの記事を読んだ/from media", "メディアの記事")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("メディアの記事を読んだ/Read a media article", "メディアの記事")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("ポスター/poster", "ポスター")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("ポスター/ poster", "ポスター")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("チラシ/Flyer", "チラシ")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("チラシ/ Flyer", "チラシ")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("コズミくん/cosmicun", "コズミくん")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("コズミくん/ cosmicun", "コズミくん")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("SNS（コズミくん）/Cosmi-cun", "コズミくんSNS")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("SNS（コズミくん）/ Cosmi-cun", "コズミくんSNS")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("SNS (TSUKUBA LIVE!)", "TL!SNS")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace(" SNS（体育スポーツ局）/UT BPES", "スポーツ局SNS")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("SNS（体育スポーツ局）/UT BPES", "スポーツ局SNS")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("SNS (体育スポーツ局）/UT BPES", "スポーツ局SNS")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("コズミくんと会った/Met with Cosmicun.", "コズミくんと会った")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("今日オープンキャンパスで知った/Learned at today's Open Campus.", "オープンキャンパス")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace(" Twitter", "X")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("Twitter", "X")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("X (TSUKUBA LIVE! 公式)", "X")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("X（TSUKUBA LIVE! 公式）", "X")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("Instagram (TSUKUBA LIVE! 公式)", "Instagram")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("Instagram（TSUKUBA LIVE! 公式）", "Instagram")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("LINE (TSUKUBA LIVE! 公式)", "LINE")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("LINE（TSUKUBA LIVE! 公式）", "LINE")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("筑波大学女子バレボール部 公式SNS/Univ. of Tsukuba Women's Volleyball Team Official SNS", "チームSNS")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("筑波大学男子バスケットボール部 公式SNS/Univ. of Tsukuba men's basketball team official SNS", "チームSNS")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("筑波大学男子バスケットボール部 公式SNS/ Univ. of Tsukuba men's basketball team official SNS", "チームSNS")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("つくばユナイテッドSun GAIA 公式SNS/Tsukuba United Sun GAIA Official SNS", "スポンサー企業SNS")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("つくばユナイテッドSun GAIA関係者の紹介/Introduction from Tsukuba United Sun GAIA", "スポンサー企業からの紹介")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("カウントダウンボード/Countdown board", "カウントダウンボード")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("三角ポップ/Triangle pop-up sign", "三角ポップ")
-    df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("横断幕/Banner", "横断幕")
-    
-    
+    if "知ったきっかけ" in df_name.columns:
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("前回のTSUKUBA LIVE!から知っていた/I knew it from the last TSUKUBA LIVE!", "前回から知っていた")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("前回のTSUKUBA LIVE!で知った/I knew it at the last TSUKUBA LIVE!", "前回のTL!で知った")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace(" 前回のTSUKUBA LIVE!の時から知っていた/knew from the last Home Game", "前回のTL!で知った")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("前回のTSUKUBA LIVE!の時から知っていた/knew from the last Home Game", "前回のTL!で知った")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("前回のTSUKUBA LIVE!から知っていた/I knew it from the latest TSUKUBA LIVE!", "前回のTL!で知った")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("家族・友人の紹介/from a friend・family", "家族・友人の紹介")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace(" 家族・友人の紹介/from a friend", "家族・友人の紹介")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("家族・友人の紹介/from a friend", "家族・友人の紹介")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("家族・友人の紹介/ from a friend・family", "家族・友人の紹介")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("選手の知り合い/friend of player", "選手の知人")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("女子バレーボール部員の紹介/Introduction from the women's volleyball team", "選手の知人")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("男子バレーボール部員の紹介/Introduction from the men's volleyball team", "選手の知人")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("男子バスケットボール部員の紹介/Introduction from the men's basketball team member", "選手の知人")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("男子バスケットボール部員の紹介/ Introduction from the men's basketball team member", "選手の知人")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("女子バスケットボール部員の紹介/Introduction from the women's basketball team member", "選手の知人")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("TSUKUBA LIVE! 運営スタッフの紹介/Introduction from the TSUKUBA LIVE! organizing staff", "クリエイターからの紹介")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("TSUKUBA LIVE! 運営スタッフの紹介/Introduction from the TSUKUBA LIVE! creators", "クリエイターからの紹介")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("TSUKUBA LIVE! 運営スタッフの紹介/ Introduction from the TSUKUBA LIVE! creators", "クリエイターからの紹介")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("メディアの記事を読んだ/from media", "メディアの記事")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("メディアの記事を読んだ/Read a media article", "メディアの記事")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("ポスター/poster", "ポスター")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("ポスター/ poster", "ポスター")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("チラシ/Flyer", "チラシ")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("チラシ/ Flyer", "チラシ")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("コズミくん/cosmicun", "コズミくん")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("コズミくん/ cosmicun", "コズミくん")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("SNS（コズミくん）/Cosmi-cun", "コズミくんSNS")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("SNS（コズミくん）/ Cosmi-cun", "コズミくんSNS")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("SNS (TSUKUBA LIVE!)", "TL!SNS")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace(" SNS（体育スポーツ局）/UT BPES", "スポーツ局SNS")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("SNS（体育スポーツ局）/UT BPES", "スポーツ局SNS")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("SNS (体育スポーツ局）/UT BPES", "スポーツ局SNS")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("コズミくんと会った/Met with Cosmicun.", "コズミくんと会った")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("今日オープンキャンパスで知った/Learned at today's Open Campus.", "オープンキャンパス")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace(" Twitter", "X")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("Twitter", "X")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("X (TSUKUBA LIVE! 公式)", "X")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("X（TSUKUBA LIVE! 公式）", "X")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("Instagram (TSUKUBA LIVE! 公式)", "Instagram")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("Instagram（TSUKUBA LIVE! 公式）", "Instagram")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("LINE (TSUKUBA LIVE! 公式)", "LINE")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("LINE（TSUKUBA LIVE! 公式）", "LINE")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("筑波大学女子バレボール部 公式SNS/Univ. of Tsukuba Women's Volleyball Team Official SNS", "チームSNS")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("筑波大学男子バスケットボール部 公式SNS/Univ. of Tsukuba men's basketball team official SNS", "チームSNS")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("筑波大学男子バスケットボール部 公式SNS/ Univ. of Tsukuba men's basketball team official SNS", "チームSNS")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("つくばユナイテッドSun GAIA 公式SNS/Tsukuba United Sun GAIA Official SNS", "スポンサー企業SNS")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("つくばユナイテッドSun GAIA関係者の紹介/Introduction from Tsukuba United Sun GAIA", "スポンサー企業からの紹介")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("カウントダウンボード/Countdown board", "カウントダウンボード")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("三角ポップ/Triangle pop-up sign", "三角ポップ")
+        df_name["知ったきっかけ"] = df_name["知ったきっかけ"].str.replace("横断幕/Banner", "横断幕")
+
+
 def revise_sports_watch_data(df_name):
     if "スポーツ観戦頻度" in df_name.columns:
         df_name["スポーツ観戦頻度"] = df_name["スポーツ観戦頻度"].astype(str).str.replace("月に2~3回程度/few/month", "24~36回/年")
@@ -268,7 +280,7 @@ def additional_revise(df_name):
         df_name["所属"] = df_name["所属"].str.replace("人間総合科学学術院/Graduate School of Comprehensive Human Sciences", "人間総合科学学術院")
         df_name["所属"] = df_name["所属"].str.replace("グローバル教育院/School of Integrative and Global Majors", "グローバル教育院")
         # カンマで区切られている場合、最初の選択肢だけを選ぶ
-        df_name["所属"] = df_name["所属"].apply(lambda x: x.split(',')[0] if ',' in x else x)
+        df_name["所属"] = df_name["所属"].fillna("").apply(lambda x: x.split(',')[0] if ',' in x else x)
         
     # スポーツ観戦頻度の列で、コンマで区切られた最初の選択肢のみを取得
     if "スポーツ観戦頻度" in df_name.columns:

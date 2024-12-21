@@ -57,16 +57,8 @@ MIDDLEWARE = [
 
 
 #本番環境では、CORS_ORIGIN_WHITELISTを指定する
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:3000",
-    "http://localhost:3000",
-    "https://127.0.0.1:3000",
-    "https://127.0.0.1:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    "https://ec2-18-205-158-217.compute-1.amazonaws.com"
-]
-
+CORS_ORIGIN_WHITELIST = env.list("CORS_ORIGIN_WHITELIST", default=[])
+CSRF_COOKIE_SECURE = True
 
 ROOT_URLCONF = 'mysite.urls'
 
@@ -142,7 +134,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 #静的ファイルの設定
 STATIC_ROOT = str(BASE_DIR / 'staticfiles')
 
