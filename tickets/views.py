@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import viewsets,status
 from .models import Ticket
 from .serializers import TicketSerializer
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny,IsAuthenticated,IsAdminUser
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import gettext as _
 from django.core.files.storage import FileSystemStorage
@@ -25,10 +25,14 @@ import os
 import io
 from datetime import datetime
 from django.db.models import Q
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.exceptions import PermissionDenied
 
 # CSVファイルのアップロードとデータ保存を行うビュー
 class CSVUploadView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
 
     def post(self, request, format=None):
         file = request.FILES.get('file')
@@ -56,21 +60,21 @@ class CSVUploadView(APIView):
                         'quantity': row.get("重複枚数") or 0,
                         'Order_number': row.get("Order number"),
                         'purchase_datetime': purchase_datetime,
-                        'ticket_type': row.get("チケット種類"),
+                        'ticket_type': row.get("チケット種類") or "未指定",
                         'ticket_price': row.get("チケット価格"),
                         'seat_type': row.get("座席種"),
                         'coupon_applied': row.get("クーポン有無") != "クーポンなし",
-                        'category': row.get("カテゴリー"),
+                        'category': row.get("カテゴリー") if row.get("カテゴリー") in dict(Ticket.CATEGORY_CHOICES) else "無回答",
                         'nationality': row.get("国籍") or "未指定",
-                        'gender': row.get("性別"),
-                        'age_group': row.get("年代"),
-                        'grade': row.get("学年"),
-                        'department': row.get("所属") or "無回答",
-                        'referral_source': row.get("知ったきっかけ"),
-                        'attendance_count': row.get("来場回数") or "無回答",
-                        'play_freq': row.get("スポーツ実施頻度"),
-                        'viewing_freq': row.get("スポーツ観戦頻度"),
-                        'special_viewing_freq': row.get("開催競技観戦頻度") or "無回答",
+                        'gender': row.get("性別") if row.get("性別") in dict(Ticket.GENDER_CHOICES) else "無回答",
+                        'age_group': row.get("年代") if row.get("年代") in dict(Ticket.AGE_GROUP_CHOICES) else "無回答",
+                        'grade': row.get("学年") if row.get("学年") in dict(Ticket.GRADE_CHOICES) else "無回答",
+                        'department': row.get("所属") if row.get("所属") in dict(Ticket.DEPARTMENT_CHOICES) else "無回答",
+                        'referral_source': row.get("知ったきっかけ") or "無回答",
+                        'attendance_count': row.get("来場回数") if row.get("来場回数") in dict(Ticket.ATTENDANCE_COUNT_CHOICES) else "無回答",
+                        'play_freq': row.get("スポーツ実施頻度") if row.get("スポーツ実施頻度") in dict(Ticket.PLAY_FREQ_CHOICES) else "無回答",
+                        'viewing_freq': row.get("スポーツ観戦頻度") if row.get("スポーツ観戦頻度") in dict(Ticket.VIEWING_FREQ_CHOICES) else "無回答",
+                        'special_viewing_freq': row.get("開催競技観戦頻度") if row.get("開催競技観戦頻度") in dict(Ticket.SPECIAL_VIEWING_CHOICES) else "無回答",
                         'event_id': row.get("event_id"),
                     })
                     
@@ -92,33 +96,45 @@ class CSVUploadView(APIView):
 
 
 # HTMLテンプレートの表示を行うビュー
-class upload_csv_interface(View):
+class upload_csv_interface(LoginRequiredMixin, UserPassesTestMixin, View):
     template_name = 'tickets/upload_csv.html'
-    
+    login_url = None
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def handle_no_permission(self):
+        raise PermissionDenied("このページは管理者専用です。")
+
     def get(self, request):
         return render(request, self.template_name)
 
 
 # 動的なフィルタリングと特定カラムの取得を行うビュー
 class TicketViewSet(viewsets.ModelViewSet):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
     
     @method_decorator(cache_page(60 * 15))  # キャッシュを15分に設定
     def list(self, request, *args, **kwargs):
+        print("認証ユーザー:", request.user)
+        if not request.user.is_authenticated:
+            print("ユーザーは認証されていません")
+        else:
+            print("認証成功")
         """
-            チケット情報を取得するAPI
+        チケット情報を取得するAPI
 
-            Parameters:
-                quantity (list): 数量
-                purchase_date (list): 購入日
-                ticket_type (list): チケットタイプ
-                ... 他のパラメータ
+        Parameters:
+            quantity (list): 数量
+            purchase_date (list): 購入日
+            ticket_type (list): チケットタイプ
+            ... 他のパラメータ
 
-            Returns:
-                Response: チケット情報のリスト
-            """
+        Returns:
+            Response: チケット情報のリスト
+        """
         try:
             # クエリパラメータを利用したフィルタ条件の取得
             quantity = request.query_params.getlist('quantity')
@@ -254,6 +270,12 @@ def upload_file(request):
             processed_df = allpreprocessing(df)
             processed_full_df = allpreprocessing_full(df.copy())
             processed_customer_df = allpreprocessing_customer(df.copy())
+
+            # event_id を追加
+            if event_id:
+                processed_df['event_id'] = event_id
+                processed_full_df['event_id'] = event_id
+                processed_customer_df['event_id'] = event_id
 
             # 元のファイル名（拡張子なし）を取得してZIPファイルの名前に使用
             file_name_base = os.path.splitext(csv_file.name)[0]

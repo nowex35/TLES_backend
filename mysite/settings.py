@@ -22,7 +22,6 @@ DEBUG = env("DEBUG")
 #本番環境では、ALLOWED_HOSTSを指定する
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -59,12 +58,11 @@ MIDDLEWARE = [
 #本番環境では、CORS_ORIGIN_WHITELISTを指定する
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:3000",
-    "http://localhost:3000",
-    "https://127.0.0.1:3000",
     "https://127.0.0.1:3000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
-    "https://ec2-18-205-158-217.compute-1.amazonaws.com"
+    "https://ec2-18-205-158-217.compute-1.amazonaws.com",
+    "https://tles-y1n8amz5v-nowex35s-projects.vercel.app",
 ]
 
 
@@ -88,7 +86,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mysite.wsgi.application'
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1', 'https://ec2-18-205-158-217.compute-1.amazonaws.com']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1', 'https://ec2-18-205-158-217.compute-1.amazonaws.com','https://18.205.158.217']
+CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True
 
@@ -142,7 +141,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 #静的ファイルの設定
 STATIC_ROOT = str(BASE_DIR / 'staticfiles')
 

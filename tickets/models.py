@@ -102,6 +102,7 @@ class Ticket(models.Model):
         ('Ph.D', 'Ph.D'),
         ('他大生', '他大生'),
         ('筑波大生でない', '筑波大生でない'),
+        ('無回答','無回答'),
     ]
     GENDER_CHOICES = [
         ('男性', '男性'),
@@ -113,7 +114,7 @@ class Ticket(models.Model):
     order_number = models.CharField("購入識別番号", max_length=50,default="")
     quantity = models.PositiveIntegerField("購入枚数",default=0)
     purchase_datetime = models.DateTimeField("購入日時")
-    ticket_type = models.CharField("チケット種類", max_length=50)
+    ticket_type = models.CharField("チケット種類", max_length=100)
     ticket_price = models.PositiveIntegerField("チケット価格")
     seat_type = models.CharField("座席種", max_length=50)
     coupon_applied = models.BooleanField("クーポン有無", default=False)

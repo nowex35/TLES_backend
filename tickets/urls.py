@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
-
+from rest_framework.permissions import IsAdminUser
+from rest_framework.decorators import api_view, permission_classes
 urlpatterns = [
     # CSVファイルをデータベースにアップロードするエンドポイント
     path('upload/', views.CSVUploadView.as_view(), name='upload_csv'),
