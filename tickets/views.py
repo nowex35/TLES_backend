@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import viewsets,status
 from .models import Ticket
 from .serializers import TicketSerializer
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import gettext as _
 from django.core.files.storage import FileSystemStorage
@@ -25,10 +25,14 @@ import os
 import io
 from datetime import datetime
 from django.db.models import Q
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.exceptions import PermissionDenied
 
 # CSVファイルのアップロードとデータ保存を行うビュー
 class CSVUploadView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
 
     def post(self, request, format=None):
         file = request.FILES.get('file')
@@ -92,16 +96,24 @@ class CSVUploadView(APIView):
 
 
 # HTMLテンプレートの表示を行うビュー
-class upload_csv_interface(View):
+class upload_csv_interface(LoginRequiredMixin, UserPassesTestMixin, View):
     template_name = 'tickets/upload_csv.html'
-    
+
+    login_url = None
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def handle_no_permission(self):
+        raise PermissionDenied("このページは管理者専用です。")
+
     def get(self, request):
         return render(request, self.template_name)
 
 
 # 動的なフィルタリングと特定カラムの取得を行うビュー
 class TicketViewSet(viewsets.ModelViewSet):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
     
